@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Principal | Lopes E-commerce</title>
+    <style>
+        /* Estilos básicos para melhor visualização */
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .content { margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; }
+        input { display: block; margin-bottom: 10px; padding: 8px; width: 250px; }
+        button { padding: 10px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>Bem-vindo ao Painel!</h1>
+        <p>Utilize os formulários abaixo para gerenciar seu estoque e vendas.</p>
+        
+        <hr>
+        
+        <h2>Registrar Produto</h2>
+        <div class="content">
+            <input type="text" id="produto-nome" placeholder="Nome do Produto">
+            <input type="number" id="produto-quantidade" placeholder="Quantidade Inicial">
+            <input type="text" id="produto-sku" placeholder="Código SKU">
+            <input type="number" id="produto-preco" placeholder="Preço Unitário" step="0.01">
+            <button id="btn-adicionar-produto">Adicionar Produto</button>
+            <p id="msg-produto"></p>
+        </div>
+
+        <hr>
+        
+        <h2>Registrar Pedido (Simulação)</h2>
+        <div class="content">
+            <input type="number" id="pedido-usuario-id" placeholder="ID do Usuário (Ex: 1)">
+            <input type="text" id="pedido-produto-id" placeholder="ID do Produto (Ex: 1)">
+            <input type="number" id="pedido-quantidade" placeholder="Quantidade Comprada">
+            <button id="btn-criar-pedido">Criar Pedido</button>
+            <p id="msg-pedido"></p>
+        </div>
+
+        <hr>
+        
+        <form action="/logout" method="POST">
+            <button type="submit">Sair (Logout)</button>
+        </form>
+    </div>
+
+    <script>
+        // Função para simular o registro de produto
+        document.getElementById('btn-adicionar-produto').addEventListener('click', async () => {
+            const nome = document.getElementById('produto-nome').value;
+            const quantidade = parseInt(document.getElementById('produto-quantidade').value);
+            const sku = document.getElementById('produto-sku').value;
+            const preco = parseFloat(document.getElementById('produto-preco').value);
+            const msgElement = document.getElementById('msg-produto');
+
+            if (!nome || isNaN(quantidade) || !sku || isNaN(preco)) {
+                msgElement.textContent = 'Erro: Preencha todos os campos do produto corretamente.';
+                msgElement.style.color = 'red';
+                return;
+            }
+
+            try {
+                // Envia os dados para a rota do servidor Node.js
+                const response = await fetch('/produto/adicionar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nome, quantidade, sku, preco })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    msgElement.textContent = `Produto "${result.nome}" registrado com sucesso! ID: ${result.id}`;
+                    msgElement.style.color = 'green';
+                    // Limpar formulário após sucesso
+                    document.getElementById('produto-nome').value = '';
+                    document.getElementById('produto-quantidade').value = '';
+                    document.getElementById('produto-sku').value = '';
+                    document.getElementById('produto-preco').value = '';
+                } else {
+                    msgElement.textContent = `Erro ao registrar produto: ${result.message}`;
+                    msgElement.style.color = 'red';
+                }
+
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                msgElement.textContent = 'Erro de comunicação com o servidor.';
+                msgElement.style.color = 'red';
+            }
+        });
+
+
+        // Função para simular o registro de pedido
+        document.getElementById('btn-criar-pedido').addEventListener('click', async () => {
+            const usuarioId = parseInt(document.getElementById('pedido-usuario-id').value);
+            const produtoId = parseInt(document.getElementById('pedido-produto-id').value);
+            const quantidade = parseInt(document.getElementById('pedido-quantidade').value);
+            const msgElement = document.getElementById('msg-pedido');
+
+            if (isNaN(usuarioId) || isNaN(produtoId) || isNaN(quantidade) || quantidade <= 0) {
+                msgElement.textContent = 'Erro: Preencha todos os IDs e quantidade do pedido corretamente.';
+                msgElement.style.color = 'red';
+                return;
+            }
+            
+            // Simulação de itens do pedido (lista)
+            const itens = [{
+                produto_id: produtoId,
+                quantidade: quantidade
+            }];
+
+            try {
+                // Envia os dados para a rota do servidor Node.js
+                const response = await fetch('/pedido/criar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ usuario_id: usuarioId, itens: itens })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    msgElement.textContent = `Pedido #${result.id} criado com sucesso! Valor Total: R$${result.valor_total.toFixed(2)}`;
+                    msgElement.style.color = 'green';
+                    // Limpar formulário após sucesso
+                    document.getElementById('pedido-usuario-id').value = '';
+                    document.getElementById('pedido-produto-id').value = '';
+                    document.getElementById('pedido-quantidade').value = '';
+                } else {
+                    msgElement.textContent = `Erro ao criar pedido: ${result.message}`;
+                    msgElement.style.color = 'red';
+                }
+
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                msgElement.textContent = 'Erro de comunicação com o servidor.';
+                msgElement.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>
